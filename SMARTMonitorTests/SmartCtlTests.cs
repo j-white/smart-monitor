@@ -70,7 +70,7 @@ namespace SMARTMonitorTests
         [TestMethod]
         public void canCaptureOutput()
         {
-            Assert.IsTrue(smartCtl.getStdOut(SmartCtl.SMARTCTL_BIN, "-h").Contains("IOCTL_SCSI"));
+            Assert.IsTrue(Utils.getStdOut(SmartCtl.SMARTCTL_BIN, "-h").Contains("IOCTL_SCSI"));
         }
     }
 

@@ -36,8 +36,10 @@ namespace SMARTMonitor {
 
             Regex whitespaceRegex = new Regex("^\\s*$");
             foreach (string line in output.Split('\n')) {
+                // Skip lines containing nothing but whitespace
                 if (whitespaceRegex.IsMatch(line)) continue;
 
+                // Grab the piece of text before the first space
                 string[] tokens = line.Split(' ');
                 if (tokens.Length > 0) {
                     devices.Add(tokens[0]);
@@ -81,6 +83,8 @@ namespace SMARTMonitor {
 
         public void startShortTest(string device) {
             string output = getStartShortTestOutput(device);
+            // This line will be output if the test was succesfully initiated or if
+            // another self-test is currently running
             if (!output.Contains("START OF OFFLINE IMMEDIATE"))
             {
                 throw new SmartNotSupportedException(output, device);
@@ -89,38 +93,47 @@ namespace SMARTMonitor {
 
         protected virtual string getScanOutput()
         {
-            return getStdOut(SMARTCTL_BIN, "--scan");
+            return Utils.getStdOut(SMARTCTL_BIN, "--scan", Verbose);
         }
 
         protected virtual string getSmartHealthStatusOutput(string device)
         {
-            return getStdOut(SMARTCTL_BIN, "-H " + device);
+            return Utils.getStdOut(SMARTCTL_BIN, "-H " + device, Verbose);
         }
 
         protected virtual string getStartShortTestOutput(string device)
         {
-            return getStdOut(SMARTCTL_BIN, "-t short " + device);
+            return Utils.getStdOut(SMARTCTL_BIN, "-t short " + device, Verbose);
         }
 
-	    public string getStdOut(String cmd, String args) {
-		    Process p = new Process();
+
+    }
+
+    public class Utils
+    {
+        public static string getStdOut(String cmd, String args, bool verbose=false)
+        {
+            Process p = new Process();
             ProcessStartInfo startInfo = new ProcessStartInfo(cmd, args);
-		    startInfo.UseShellExecute = false;
-		    startInfo.RedirectStandardOutput = true;
-		    startInfo.Verb = "runas";
+            startInfo.UseShellExecute = false;
+            startInfo.RedirectStandardOutput = true;
+
+            // This should allow the executed process to inherit the administrative rights
+            startInfo.Verb = "runas";
+
             p.StartInfo = startInfo;
             p.Start();
             string output = p.StandardOutput.ReadToEnd();
             p.WaitForExit();
             p.Close();
 
-            if (Verbose)
+            if (verbose)
             {
                 System.Console.WriteLine("Output of '{0} {1}':\n{2}\n", cmd, args, output);
             }
 
-		    return output;
-	    }
+            return output;
+        }
     }
 
     [Serializable]
